@@ -28,7 +28,20 @@ WAY_FIELDS = ['id', 'user', 'uid', 'version', 'changeset', 'timestamp']
 WAY_TAGS_FIELDS = ['id', 'key', 'value', 'type']
 WAY_NODES_FIELDS = ['id', 'node_id', 'position']
 
+mapping = { "Raod": "Road",
+            "road": "Road",
+            "Rd": "Road",
+            "Rd.": "Road",
+            }
+def update_name(name, mapping):
+    "update bad name to good name"
+    for key in mapping.keys():
+        if key in name and not mapping[key] in name:
+            name = name.replace(key,mapping[key])
+    return name
+
 def process_tag(element,id):
+    "get a tag element, process it and return in appropriate format"
     tag = {}
     tag['value'] = element.attrib['v']
     tag['id'] = id
@@ -40,6 +53,8 @@ def process_tag(element,id):
         indice = key.find(':')
         tag['type'] = key[:indice]
         tag['key'] = key[indice+1:]
+    if tag['type'] == 'addr' and tag['key'] == 'street':
+        tag['value'] = update_name('value')
     return tag
     
 def shape_element(element, node_attr_fields=NODE_FIELDS, way_attr_fields=WAY_FIELDS,
