@@ -40,6 +40,20 @@ def update_name(name, mapping):
             name = name.replace(key,mapping[key])
     return name
 
+def update_format(phone):
+    'update phone number to make them have format like "+4423xxxxxxxx" '
+    #delete spece and - seperator. case :'+44 23 8055 5566'
+    phone = phone.replace(" ","")
+    phone = phone.relace("-","")
+    
+    # case: '+44 (0) 2380 489 126'
+    phone = phone.relace("(0)","")
+    
+    #case: '023 8076 4810'
+    if phoone[0] == '0':
+        phone = '+44' + phone[1:]
+    return phone
+
 def process_tag(element,id):
     "get a tag element, process it and return in appropriate format"
     tag = {}
@@ -53,8 +67,12 @@ def process_tag(element,id):
         indice = key.find(':')
         tag['type'] = key[:indice]
         tag['key'] = key[indice+1:]
+    # update streep name 
     if tag['type'] == 'addr' and tag['key'] == 'street':
-        tag['value'] = update_name('value')
+        tag['value'] = update_name(tag['value'])
+    #update phone format
+    if tag['key'] == 'phone':
+        tag['value'] = update_format(tag['value'])
     return tag
     
 def shape_element(element, node_attr_fields=NODE_FIELDS, way_attr_fields=WAY_FIELDS,
