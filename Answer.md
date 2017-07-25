@@ -19,6 +19,8 @@ Lastly I import all the csv file into sqlite database on the sqlite3 command lin
 ## Problems encountered in  map
 I audited lots of field in this dataset and surprisingly find that this dataset is overall quite clean.
 
+
+### Street name field
 One problem I encountered in the map is inconsistent street type name ('Bluebell Raod','Bluebell road','Bellevue Rd' etc)
 
 Here is how I fix this in code:
@@ -37,7 +39,33 @@ def update_name(name, mapping):
     return name
 ```
 
-Another problem is that there are some strange number or character ("387","S") in the steet field, which I have no idea to deal with.
+Another problem in the street name field is that there are some strange number or character ("387","S") in the steet field, which I have no idea to deal with.
+
+###  phone number field
+When auditing phone number field, I found that there is also inconsistance in the phone number format.    
+
+The full phone number should be country code(+44) plus district code(23) plus eight phone number digit. e.g. (+442312345678) is valid full phone number.    
+
+However in this dataset, some phone number don't have country code('023 8033 3778')， some have seperate in the middle in phopne number digit while some don't have space seperation at all  ('+44 23 8055 5566' vs '+442036450000' ).  Also there are other strange seperation rules in the dataset ('+44 2380 637 915' and '+44-23-8022-1436')
+
+Here is how I fix this in code:
+
+
+```python
+def update_format(phone):
+    'update phone number to make them have format like "+4423xxxxxxxx" '
+    #delete spece and - seperator. case :'+44 23 8055 5566'
+    phone = phone.replace(" ","")
+    phone = phone.relace("-","")
+    
+    # case: '+44 (0) 2380 489 126'
+    phone = phone.relace("(0)","")
+    
+    #case: '023 8076 4810'
+    if phoone[0] == 0:
+        phone = '+44' + phone[1:]
+    return phone
+```
 
 ## Overview of the data
 ### Size of files
@@ -426,6 +454,164 @@ Although the system is effective not hard to write, it is kind of difficult to u
 
 ## Sources
 * [Sample project](https://gist.github.com/carlward/54ec1c91b62a5f911c42#openstreetmap-data-case-study)
+
+
+```python
+query = '''
+SELECT value,type,COUNT(*) as count
+FROM 
+(SELECT * FROM nodes_tags UNION ALL
+SELECT * FROM ways_tags) as tags
+WHERE tags.key = 'phone'
+GROUP BY value
+ORDER BY count DESC
+'''
+makequery(query)
+```
+
+    (u'+44 23 8023 0292', u'regular\r', 2)
+    (u'+44 23 8023 1176', u'regular\r', 2)
+    (u'+44 23 8023 4149;+44 23 8023 4150', u'regular\r', 2)
+    (u'+44 23 8023 4154;+44 23 8023 4156', u'regular\r', 2)
+    (u'+44 23 8023 4678;+44 23 8023 4706', u'regular\r', 2)
+    (u'+44 23 8023 8804', u'regular\r', 2)
+    (u'+44 23 8040 2838', u'regular\r', 2)
+    (u'+44 23 8040 4186', u'regular\r', 2)
+    (u'+44 23 8044 7455', u'regular\r', 2)
+    (u'+44 23 80447724', u'regular\r', 2)
+    (u'+44 23 8046 2205', u'regular\r', 2)
+    (u'+44 23 80584743', u'regular\r', 2)
+    (u'+44 23 8063 8778', u'regular\r', 2)
+    (u'+44 23 80775281', u'regular\r', 2)
+    (u'+44 23 80776410', u'regular\r', 2)
+    (u'+44 23 8085 8147', u'regular\r', 2)
+    (u'+44 2380 221303', u'regular\r', 2)
+    (u'+44 2380 222 252', u'contact\r', 2)
+    (u'+44 2380 222548', u'regular\r', 2)
+    (u'+44 2380 223381', u'regular\r', 2)
+    (u'+44 2380 223949', u'regular\r', 2)
+    (u'+44 2380 224579', u'regular\r', 2)
+    (u'+44 2380 225868', u'regular\r', 2)
+    (u'+44 2380 229500', u'regular\r', 2)
+    (u'+44 2380 231175', u'regular\r', 2)
+    (u'+44 2380 233 360', u'contact\r', 2)
+    (u'+44 2380 236175', u'regular\r', 2)
+    (u'+44 2380 402889', u'regular\r', 2)
+    (u'+44 2380 441440', u'regular\r', 2)
+    (u'+44 2380 447058', u'regular\r', 2)
+    (u'+44 2380 447287', u'regular\r', 2)
+    (u'+44 2380 462446', u'regular\r', 2)
+    (u'+44 2380 472021', u'regular\r', 2)
+    (u'+44 2380 552612', u'regular\r', 2)
+    (u'+44 2380 556225', u'regular\r', 2)
+    (u'+44 2380 557943', u'regular\r', 2)
+    (u'+44 2380 558578', u'regular\r', 2)
+    (u'+44 2380 634413', u'regular\r', 2)
+    (u'+44 2380 637 915', u'regular\r', 2)
+    (u'+44 2380 639870', u'regular\r', 2)
+    (u'+44 2380 642553', u'regular\r', 2)
+    (u'+44 2380 769747', u'regular\r', 2)
+    (u'+44 2380 772273', u'regular\r', 2)
+    (u'+44 2380 775289', u'regular\r', 2)
+    (u'+44 2380 775357', u'regular\r', 2)
+    (u'+44 2380 986498', u'regular\r', 2)
+    (u'+44-23-8022-1436', u'regular\r', 2)
+    (u'+44-23-8022-4000', u'regular\r', 2)
+    (u'+44-23-8022-4422', u'regular\r', 2)
+    (u'+44-23-8070-2232', u'regular\r', 2)
+    (u'+44-23-8071-1700', u'regular\r', 2)
+    (u'+44-23-8077-1286', u'regular\r', 2)
+    (u'+44-2380-556563', u'regular\r', 2)
+    (u'+442380336969', u'regular\r', 2)
+    (u'+442380434849', u'regular\r', 2)
+    (u'+442380439528', u'regular\r', 2)
+    (u'+442380554049', u'regular\r', 2)
+    (u'+443339997613', u'regular\r', 2)
+    (u'023 8033 3778', u'contact\r', 2)
+    (u'023 8076 4810', u'regular\r', 2)
+    (u'023 8083 9200', u'contact\r', 2)
+    (u'02380606359', u'regular\r', 2)
+    (u'02381247024', u'regular\r', 2)
+    (u'02381247030', u'regular\r', 2)
+    (u'(023) 8022 4327', u'contact\r', 1)
+    (u'+44 (0) 2380 489 126', u'contact\r', 1)
+    (u'+44 (0) 2380 555 044', u'contact\r', 1)
+    (u'+44 (0) 2380 585 599', u'contact\r', 1)
+    (u'+44 (0) 2380 677 669', u'contact\r', 1)
+    (u'+44 (0)23 8033 8941', u'regular\r', 1)
+    (u'+44 (0)780 2850442', u'regular\r', 1)
+    (u'+44 23 80223081', u'regular\r', 1)
+    (u'+44 23 8046 2824', u'regular\r', 1)
+    (u'+44 23 8046 3538', u'regular\r', 1)
+    (u'+44 23 8046 3646', u'regular\r', 1)
+    (u'+44 23 8046 4121', u'regular\r', 1)
+    (u'+44 23 8046 4686', u'regular\r', 1)
+    (u'+44 23 80473269', u'regular\r', 1)
+    (u'+44 23 8055 4400', u'regular\r', 1)
+    (u'+44 23 8055 5566', u'regular\r', 1)
+    (u'+44 23 80550508', u'regular\r', 1)
+    (u'+44 23 8070 2700', u'regular\r', 1)
+    (u'+44 23 8083 3605', u'regular\r', 1)
+    (u'+44 2380 225434', u'regular\r', 1)
+    (u'+44 2380 555393', u'regular\r', 1)
+    (u'+44 2380 555544', u'regular\r', 1)
+    (u'+44 2380 558777', u'regular\r', 1)
+    (u'+44 2380 584019', u'regular\r', 1)
+    (u'+44 2380 584607', u'regular\r', 1)
+    (u'+44 2380 679334', u'regular\r', 1)
+    (u'+44 2380 829216', u'regular\r', 1)
+    (u'+44 2380 926 300', u'regular\r', 1)
+    (u'+44 2390 772273', u'regular\r', 1)
+    (u'+44 7951 671886', u'regular\r', 1)
+    (u'+44 871 527 9002', u'regular\r', 1)
+    (u'+44(0)2380 635 830', u'regular\r', 1)
+    (u'+44-02380-315033', u'regular\r', 1)
+    (u'+44-23-8022-0183', u'regular\r', 1)
+    (u'+44-23-8022-2189', u'regular\r', 1)
+    (u'+44-23-8033-9167', u'regular\r', 1)
+    (u'+44-23-8045-7462', u'regular\r', 1)
+    (u'+44-23-8063-4533', u'regular\r', 1)
+    (u'+44-23-8077-9013', u'regular\r', 1)
+    (u'+44-23-8124-7026', u'regular\r', 1)
+    (u'+44-23-8124-7035', u'regular\r', 1)
+    (u'+44-845-6779626', u'regular\r', 1)
+    (u'+441483779699', u'regular\r', 1)
+    (u'+441489786653', u'regular\r', 1)
+    (u'+442036450000', u'regular\r', 1)
+    (u'+442380223086', u'regular\r', 1)
+    (u'+442380224730', u'regular\r', 1)
+    (u'+442380224761', u'regular\r', 1)
+    (u'+442380333303', u'regular\r', 1)
+    (u'+442380434368', u'regular\r', 1)
+    (u'+442380439475', u'regular\r', 1)
+    (u'+442380462333', u'regular\r', 1)
+    (u'+442380462492', u'regular\r', 1)
+    (u'+442380464055', u'regular\r', 1)
+    (u'+442380464545', u'regular\r', 1)
+    (u'+442380473179', u'regular\r', 1)
+    (u'+442380473489', u'regular\r', 1)
+    (u'+442380525150', u'regular\r', 1)
+    (u'+442380530700', u'regular\r', 1)
+    (u'+442380551199', u'regular\r', 1)
+    (u'+442380633428', u'regular\r', 1)
+    (u'+442380638883', u'regular\r', 1)
+    (u'+443300261021', u'regular\r', 1)
+    (u'+443334009753', u'regular\r', 1)
+    (u'+447871506375', u'regular\r', 1)
+    (u'+448456113397', u'regular\r', 1)
+    (u'+448456526501;+442380471140', u'regular\r', 1)
+    (u'023 8000 0601', u'regular\r', 1)
+    (u'023 8031 5500; 023 8067 1771', u'contact\r', 1)
+    (u'023 8033 0332', u'regular\r', 1)
+    (u'02380 232039', u'regular\r', 1)
+    (u'02380449300', u'regular\r', 1)
+    (u'02380637847', u'regular\r', 1)
+    (u'02381247004', u'regular\r', 1)
+    (u'02381247027', u'regular\r', 1)
+    (u'02381247029', u'regular\r', 1)
+    (u'02381247034', u'regular\r', 1)
+    (u'448719025733', u'regular\r', 1)
+    
 
 
 ```python

@@ -11788,7 +11788,7 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Problems-encountered-in--map">Problems encountered in  map<a class="anchor-link" href="#Problems-encountered-in--map">&#182;</a></h2><p>I audited lots of field in this dataset and surprisingly find that this dataset is overall quite clean.</p>
-<p>One problem I encountered in the map is inconsistent street type name ('Bluebell Raod','Bluebell road','Bellevue Rd' etc)</p>
+<h3 id="Street-name-field">Street name field<a class="anchor-link" href="#Street-name-field">&#182;</a></h3><p>One problem I encountered in the map is inconsistent street type name ('Bluebell Raod','Bluebell road','Bellevue Rd' etc)</p>
 <p>Here is how I fix this in code:</p>
 
 </div>
@@ -11821,10 +11821,48 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Another problem is that there are some strange number or character ("387","S") in the steet field, which I have no idea to deal with.</p>
+<p>Another problem in the street name field is that there are some strange number or character ("387","S") in the steet field, which I have no idea to deal with.</p>
 
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="phone-number-field">phone number field<a class="anchor-link" href="#phone-number-field">&#182;</a></h3><p>When auditing phone number field, I found that there is also inconsistance in the phone number format.</p>
+<p>The full phone number should be country code(+44) plus district code(23) plus eight phone number digit. e.g. (+442312345678) is valid full phone number.</p>
+<p>However in this dataset, some phone number don't have country code('023 8033 3778')， some have seperate in the middle in phopne number digit while some don't have space seperation at all  ('+44 23 8055 5566' vs '+442036450000' ).  Also there are other strange seperation rules in the dataset ('+44 2380 637 915' and '+44-23-8022-1436')</p>
+<p>Here is how I fix this in code:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">def</span> <span class="nf">update_format</span><span class="p">(</span><span class="n">phone</span><span class="p">):</span>
+    <span class="s1">&#39;update phone number to make them have format like &quot;+4423xxxxxxxx&quot; &#39;</span>
+    <span class="c1">#delete spece and - seperator. case :&#39;+44 23 8055 5566&#39;</span>
+    <span class="n">phone</span> <span class="o">=</span> <span class="n">phone</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">phone</span> <span class="o">=</span> <span class="n">phone</span><span class="o">.</span><span class="n">relace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># case: &#39;+44 (0) 2380 489 126&#39;</span>
+    <span class="n">phone</span> <span class="o">=</span> <span class="n">phone</span><span class="o">.</span><span class="n">relace</span><span class="p">(</span><span class="s2">&quot;(0)&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    
+    <span class="c1">#case: &#39;023 8076 4810&#39;</span>
+    <span class="k">if</span> <span class="n">phoone</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">phone</span> <span class="o">=</span> <span class="s1">&#39;+44&#39;</span> <span class="o">+</span> <span class="n">phone</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">phone</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="prompt input_prompt">
@@ -11901,7 +11939,7 @@ ways_tags.csv:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[105]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">sqlite3</span>
@@ -12499,6 +12537,183 @@ Although the system is effective not hard to write, it is kind of difficult to u
 
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">SELECT value,type,COUNT(*) as count</span>
+<span class="s1">FROM </span>
+<span class="s1">(SELECT * FROM nodes_tags UNION ALL</span>
+<span class="s1">SELECT * FROM ways_tags) as tags</span>
+<span class="s1">WHERE tags.key = &#39;phone&#39;</span>
+<span class="s1">GROUP BY value</span>
+<span class="s1">ORDER BY count DESC</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="n">makequery</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(u&#39;+44 23 8023 0292&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8023 1176&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8023 4149;+44 23 8023 4150&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8023 4154;+44 23 8023 4156&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8023 4678;+44 23 8023 4706&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8023 8804&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8040 2838&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8040 4186&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8044 7455&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 80447724&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8046 2205&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 80584743&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8063 8778&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 80775281&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 80776410&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 23 8085 8147&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 221303&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 222 252&#39;, u&#39;contact\r&#39;, 2)
+(u&#39;+44 2380 222548&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 223381&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 223949&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 224579&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 225868&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 229500&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 231175&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 233 360&#39;, u&#39;contact\r&#39;, 2)
+(u&#39;+44 2380 236175&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 402889&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 441440&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 447058&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 447287&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 462446&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 472021&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 552612&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 556225&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 557943&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 558578&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 634413&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 637 915&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 639870&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 642553&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 769747&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 772273&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 775289&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 775357&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44 2380 986498&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-23-8022-1436&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-23-8022-4000&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-23-8022-4422&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-23-8070-2232&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-23-8071-1700&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-23-8077-1286&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+44-2380-556563&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+442380336969&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+442380434849&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+442380439528&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+442380554049&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;+443339997613&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;023 8033 3778&#39;, u&#39;contact\r&#39;, 2)
+(u&#39;023 8076 4810&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;023 8083 9200&#39;, u&#39;contact\r&#39;, 2)
+(u&#39;02380606359&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;02381247024&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;02381247030&#39;, u&#39;regular\r&#39;, 2)
+(u&#39;(023) 8022 4327&#39;, u&#39;contact\r&#39;, 1)
+(u&#39;+44 (0) 2380 489 126&#39;, u&#39;contact\r&#39;, 1)
+(u&#39;+44 (0) 2380 555 044&#39;, u&#39;contact\r&#39;, 1)
+(u&#39;+44 (0) 2380 585 599&#39;, u&#39;contact\r&#39;, 1)
+(u&#39;+44 (0) 2380 677 669&#39;, u&#39;contact\r&#39;, 1)
+(u&#39;+44 (0)23 8033 8941&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 (0)780 2850442&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 80223081&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8046 2824&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8046 3538&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8046 3646&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8046 4121&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8046 4686&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 80473269&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8055 4400&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8055 5566&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 80550508&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8070 2700&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 23 8083 3605&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 225434&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 555393&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 555544&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 558777&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 584019&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 584607&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 679334&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 829216&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2380 926 300&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 2390 772273&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 7951 671886&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44 871 527 9002&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44(0)2380 635 830&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-02380-315033&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8022-0183&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8022-2189&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8033-9167&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8045-7462&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8063-4533&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8077-9013&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8124-7026&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-23-8124-7035&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+44-845-6779626&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+441483779699&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+441489786653&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442036450000&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380223086&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380224730&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380224761&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380333303&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380434368&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380439475&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380462333&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380462492&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380464055&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380464545&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380473179&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380473489&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380525150&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380530700&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380551199&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380633428&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+442380638883&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+443300261021&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+443334009753&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+447871506375&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+448456113397&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;+448456526501;+442380471140&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;023 8000 0601&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;023 8031 5500; 023 8067 1771&#39;, u&#39;contact\r&#39;, 1)
+(u&#39;023 8033 0332&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02380 232039&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02380449300&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02380637847&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02381247004&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02381247027&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02381247029&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;02381247034&#39;, u&#39;regular\r&#39;, 1)
+(u&#39;448719025733&#39;, u&#39;regular\r&#39;, 1)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
